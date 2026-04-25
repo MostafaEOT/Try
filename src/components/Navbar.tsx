@@ -16,6 +16,8 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-6">
             <Link href="/services" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Browse Services</Link>
+            <Link href="/request" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Book Now</Link>
+            <Link href="/about" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">About Us</Link>
             <Link href="/dashboard/provider" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Become a Pro</Link>
             <Link href="/dashboard/customer" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">My Bookings</Link>
           </div>
@@ -44,6 +46,8 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100 space-y-2">
             <Link href="/services" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Browse Services</Link>
+            <Link href="/request" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Book Now</Link>
+            <Link href="/about" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">About Us</Link>
             <Link href="/dashboard/provider" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Become a Pro</Link>
             <Link href="/dashboard/customer" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">My Bookings</Link>
             <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Log in</Link>

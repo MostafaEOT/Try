@@ -18,6 +18,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Quick Response", "Licensed"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    online: true,
+    distanceKm: 1.2,
+    acceptanceRate: 96,
     reviews: [
       { id: "r1", author: "Sarah K.", avatar: "SK", rating: 5, comment: "Marcus was amazing! Fixed our burst pipe at 2am without any fuss. Highly recommend!", date: "2 days ago", service: "Emergency Pipe Repair" },
       { id: "r2", author: "Tom R.", avatar: "TR", rating: 5, comment: "Professional, clean, and on time. Best plumber I've hired.", date: "1 week ago", service: "Leak Detection" },
@@ -42,6 +45,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Certified", "Background Checked"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    online: true,
+    distanceKm: 2.8,
+    acceptanceRate: 91,
     reviews: [
       { id: "r4", author: "David L.", avatar: "DL", rating: 5, comment: "Emily installed our EV charger and smart home system flawlessly. Super knowledgeable.", date: "3 days ago", service: "EV Charger Install" },
       { id: "r5", author: "Maria S.", avatar: "MS", rating: 5, comment: "Upgraded our panel safely and efficiently. Very professional.", date: "1 week ago", service: "Panel Upgrade" },
@@ -65,6 +71,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["EPA Certified", "Quick Response", "Insured"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    online: true,
+    distanceKm: 0.9,
+    acceptanceRate: 88,
     reviews: [
       { id: "r6", author: "Bob T.", avatar: "BT", rating: 5, comment: "Fixed our AC in the middle of a heat wave. True lifesaver!", date: "1 day ago", service: "AC Repair" },
       { id: "r7", author: "Anna P.", avatar: "AP", rating: 4, comment: "Good work on the furnace. Explained everything clearly.", date: "5 days ago", service: "Furnace Repair" },
@@ -88,6 +97,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Eco-Friendly", "Background Checked"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    online: true,
+    distanceKm: 3.1,
+    acceptanceRate: 98,
     reviews: [
       { id: "r8", author: "Jenny W.", avatar: "JW", rating: 5, comment: "Sofia transformed our apartment! Absolutely spotless. Will book again every month.", date: "2 days ago", service: "Deep Clean" },
       { id: "r9", author: "Carlos M.", avatar: "CM", rating: 5, comment: "Best cleaning service I've ever used. Worth every penny.", date: "4 days ago", service: "Move-Out Cleaning" },
@@ -111,6 +123,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Licensed", "Insured", "Design Expert"],
     availability: ["Mon", "Wed", "Thu", "Fri", "Sat"],
+    online: false,
+    distanceKm: 4.5,
+    acceptanceRate: 85,
     reviews: [
       { id: "r10", author: "Rachel B.", avatar: "RB", rating: 5, comment: "David completely transformed our backyard. It looks incredible!", date: "1 week ago", service: "Garden Design" },
     ],
@@ -133,6 +148,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Detail-Oriented", "Insured"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    online: true,
+    distanceKm: 2.2,
+    acceptanceRate: 93,
     reviews: [
       { id: "r11", author: "Mike H.", avatar: "MH", rating: 5, comment: "Aisha painted our whole house and it looks brand new. Incredible attention to detail.", date: "3 days ago", service: "Interior Painting" },
     ],
@@ -155,6 +173,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Master Craftsman", "Custom Work", "Licensed"],
     availability: ["Mon", "Tue", "Thu", "Fri", "Sat"],
+    online: false,
+    distanceKm: 5.7,
+    acceptanceRate: 82,
     reviews: [
       { id: "r12", author: "Nancy F.", avatar: "NF", rating: 5, comment: "Ryan built us a stunning custom bookshelf. The craftsmanship is phenomenal.", date: "2 weeks ago", service: "Custom Shelving" },
     ],
@@ -177,6 +198,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Certified", "Insured", "Pet First Aid"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    online: true,
+    distanceKm: 0.6,
+    acceptanceRate: 99,
     reviews: [
       { id: "r13", author: "Sam K.", avatar: "SK", rating: 5, comment: "Lisa is amazing with our dog! He gets so excited when she comes. Truly loves her job.", date: "1 day ago", service: "Dog Walking" },
     ],
@@ -199,6 +223,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Certified Tech", "Smart Home Expert", "Background Checked"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    online: true,
+    distanceKm: 1.8,
+    acceptanceRate: 94,
     reviews: [
       { id: "r14", author: "Helen J.", avatar: "HJ", rating: 5, comment: "Kevin set up our entire smart home system. Absolutely seamless. Super patient explaining everything.", date: "5 days ago", service: "Smart Home Setup" },
     ],
@@ -221,6 +248,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Licensed", "Mobile Service", "Background Checked"],
     availability: ["Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    online: true,
+    distanceKm: 3.4,
+    acceptanceRate: 90,
     reviews: [
       { id: "r15", author: "Chris D.", avatar: "CD", rating: 5, comment: "Best massage I've ever had. Priya is incredibly skilled and professional. Already booked again!", date: "3 days ago", service: "Deep Tissue Massage" },
     ],
@@ -243,6 +273,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Licensed", "Insured", "Free Inspection"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    online: false,
+    distanceKm: 6.2,
+    acceptanceRate: 80,
     reviews: [
       { id: "r16", author: "Patricia L.", avatar: "PL", rating: 5, comment: "Omar fixed our roof after a storm quickly and at a fair price. Great communication.", date: "1 week ago", service: "Storm Damage Repair" },
     ],
@@ -265,6 +298,9 @@ export const providers: Provider[] = [
     verified: true,
     badges: ["Top Rated", "Certified Teacher", "Background Checked"],
     availability: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    online: true,
+    distanceKm: 2.0,
+    acceptanceRate: 97,
     reviews: [
       { id: "r17", author: "Parent of Alex", avatar: "PA", rating: 5, comment: "Grace helped my son go from a C to an A in calculus in just 2 months. Absolutely brilliant tutor.", date: "4 days ago", service: "High School Math" },
     ],

@@ -28,6 +28,9 @@ export interface Provider {
   availability: string[];
   reviews: Review[];
   portfolio: string[];
+  online: boolean;
+  distanceKm: number;
+  acceptanceRate: number;
 }
 
 export interface Review {

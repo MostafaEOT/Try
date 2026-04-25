@@ -185,7 +185,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
           <p className="text-gray-500 text-lg mb-8">Find a pro for any job in your area today.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/services" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-colors text-lg">
+            <Link href="/request" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-colors text-lg">
               Book a Service
             </Link>
             <Link href="/register" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-4 px-8 rounded-xl transition-colors text-lg">
