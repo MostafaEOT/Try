@@ -1,20 +1,44 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { categories } from "@/data/categories";
+import { useAuth, deriveAvatar } from "@/context/AuthContext";
 
-export default function RegisterPage() {
+function RegisterContent() {
+  const searchParams = useSearchParams();
+  const initialRole = searchParams.get("role") === "worker" ? "worker" : "customer";
+
   const [step, setStep] = useState(1);
-  const [role, setRole] = useState<"customer" | "provider">("customer");
+  const [role, setRole] = useState<"customer" | "worker">(initialRole);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", phone: "", location: "", category: "", bio: "", rate: "" });
+
+  const { user, loading, login } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(user.role === "worker" ? "/dashboard/provider" : "/");
+    }
+  }, [user, loading, router]);
 
   const update = (field: string, value: string) => setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 2) { setStep(2); return; }
-    window.location.href = role === "customer" ? "/dashboard/customer" : "/dashboard/provider";
+    login({
+      id: `user-${Date.now()}`,
+      name: formData.name || "User",
+      email: formData.email,
+      role,
+      avatar: deriveAvatar(formData.name || "U"),
+    });
+    router.push(role === "worker" ? "/dashboard/provider" : "/");
   };
+
+  if (loading || user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -40,10 +64,16 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           {/* Role selector */}
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            <button onClick={() => setRole("customer")} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}>
+            <button
+              onClick={() => setRole("customer")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
               I need services
             </button>
-            <button onClick={() => setRole("provider")} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "provider" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}>
+            <button
+              onClick={() => setRole("worker")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
               I offer services
             </button>
           </div>
@@ -76,7 +106,7 @@ export default function RegisterPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
                   <input type="text" value={formData.location} onChange={(e) => update("location", e.target.value)} placeholder="City, State" required className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                {role === "provider" && (
+                {role === "worker" && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Service Category *</label>
@@ -135,5 +165,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }

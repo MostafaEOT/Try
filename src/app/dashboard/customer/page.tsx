@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StarRating from "@/components/StarRating";
+import { useAuth } from "@/context/AuthContext";
 
 const mockBookings = [
   { id: "b1", providerName: "Marcus Johnson", providerAvatar: "MJ", service: "Pipe Repair", date: "Apr 28, 2025", time: "10:00 AM", status: "confirmed" as const, price: 170, address: "123 Main St, New York, NY", category: "plumbing" },
@@ -27,9 +29,25 @@ const statusLabels = {
 };
 
 export default function CustomerDashboard() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [showReview, setShowReview] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "customer")) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const upcoming = mockBookings.filter((b) => ["pending", "confirmed", "in-progress"].includes(b.status));
   const past = mockBookings.filter((b) => ["completed", "cancelled"].includes(b.status));
@@ -44,7 +62,7 @@ export default function CustomerDashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Dashboard</h1>
-            <p className="text-gray-500 text-sm mt-1">Welcome back, Alex!</p>
+            <p className="text-gray-500 text-sm mt-1">Welcome back, {user.name.split(" ")[0]}!</p>
           </div>
           <Link href="/services" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors text-sm">
             + Book a Service

@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StarRating from "@/components/StarRating";
+import { useAuth } from "@/context/AuthContext";
 
 const mockJobs = [
   { id: "j1", customerName: "Alex Johnson", customerAvatar: "AJ", service: "Pipe Repair", date: "Apr 28, 2025", time: "10:00 AM", status: "confirmed" as const, amount: 170, address: "123 Main St, New York, NY" },
@@ -26,7 +28,23 @@ const statusColors = {
 };
 
 export default function ProviderDashboard() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"jobs" | "earnings" | "profile">("jobs");
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "worker")) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const totalEarnings = mockJobs.filter((j) => j.status === "completed").reduce((sum, j) => sum + j.amount, 0);
   const thisMonthEarnings = earningsData[earningsData.length - 1].amount;
@@ -39,10 +57,10 @@ export default function ProviderDashboard() {
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xl">
-              MJ
+              {user.avatar}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Marcus Johnson</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <StarRating rating={4.9} />
                 <span className="text-sm font-medium text-gray-700">4.9</span>

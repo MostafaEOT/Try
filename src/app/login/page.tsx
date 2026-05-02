@@ -1,16 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth, deriveNameFromEmail, deriveAvatar } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"customer" | "provider">("customer");
+  const [role, setRole] = useState<"customer" | "worker">("customer");
+  const { user, loading, login } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(user.role === "worker" ? "/dashboard/provider" : "/");
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = role === "customer" ? "/dashboard/customer" : "/dashboard/provider";
+    const name = deriveNameFromEmail(email);
+    login({
+      id: `user-${Date.now()}`,
+      name,
+      email,
+      role,
+      avatar: deriveAvatar(name),
+    });
+    router.push(role === "worker" ? "/dashboard/provider" : "/");
   };
+
+  if (loading || user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -24,10 +44,16 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           {/* Role selector */}
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            <button onClick={() => setRole("customer")} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}>
+            <button
+              onClick={() => setRole("customer")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
               I&apos;m a Customer
             </button>
-            <button onClick={() => setRole("provider")} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "provider" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}>
+            <button
+              onClick={() => setRole("worker")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
               I&apos;m a Pro
             </button>
           </div>
@@ -59,8 +85,12 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 text-xs text-blue-700">
+              <span className="font-semibold">Demo:</span> any email &amp; password · use the toggle above to switch roles
+            </div>
+
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors">
-              Sign In
+              Sign In as {role === "customer" ? "Customer" : "Pro"}
             </button>
           </form>
 

@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { categories } from "@/data/categories";
 import { providers } from "@/data/providers";
 import StarRating from "@/components/StarRating";
 import { Provider } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -25,6 +27,15 @@ type BookingMode = "instant" | "scheduled";
 type Step = 1 | 2 | 3 | 4 | 5;
 
 export default function RequestPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "customer")) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
   const [step, setStep] = useState<Step>(1);
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
@@ -38,6 +49,14 @@ export default function RequestPage() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatchStep, setDispatchStep] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const selectedCategory = categories.find((c) => c.id === category);
 
