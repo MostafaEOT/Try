@@ -20,6 +20,13 @@ export async function POST(request: Request) {
     }
   }
 
+  // For workers, find their linked Provider profile by name
+  let providerId: string | undefined;
+  if (user.role === "worker") {
+    const provider = await prisma.provider.findFirst({ where: { name: user.name } });
+    if (provider) providerId = provider.id;
+  }
+
   return NextResponse.json({
     id: user.id,
     name: user.name,
@@ -27,5 +34,6 @@ export async function POST(request: Request) {
     role: user.role,
     avatar: user.avatar,
     isActive: user.isActive,
+    providerId,
   });
 }

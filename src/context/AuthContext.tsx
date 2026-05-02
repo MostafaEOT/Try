@@ -10,6 +10,7 @@ export interface AuthUser {
   role: UserRole;
   avatar: string;
   isActive?: boolean;
+  providerId?: string;
 }
 
 interface AuthContextType {

@@ -2,10 +2,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { categories } from "@/data/categories";
-import { providers } from "@/data/providers";
 import StarRating from "@/components/StarRating";
-import { Provider } from "@/types";
+import { Provider, ServiceCategory } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -49,6 +47,11 @@ export default function RequestPage() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatchStep, setDispatchStep] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
+  }, []);
 
   if (loading || !user) {
     return (
@@ -69,11 +72,7 @@ export default function RequestPage() {
         setTimeout(() => setDispatchStep(1), 800),
         setTimeout(() => setDispatchStep(2), 2000),
         setTimeout(() => setDispatchStep(3), 3500),
-        setTimeout(() => {
-          setDispatching(false);
-          const online = providers.filter((p) => p.online).slice(0, 4);
-          setNearbyProviders(online);
-        }, 4500),
+        setTimeout(() => setDispatching(false), 4500),
       ];
       return () => timers.forEach(clearTimeout);
     }
@@ -88,20 +87,42 @@ export default function RequestPage() {
     setStep(3);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const url = category ? `/api/providers?categoryId=${category}` : "/api/providers";
+    const data: Provider[] = await fetch(url).then((r) => r.json()).catch(() => []);
     if (mode === "instant") {
       setStep(4);
+      // nearbyProviders set after dispatch animation (see useEffect below)
+      setNearbyProviders(data.filter((p) => p.online).slice(0, 4));
     } else {
-      // For scheduled, show provider list directly
-      const available = providers.filter((p) => p.categoryId === category || !category).slice(0, 4);
-      setNearbyProviders(available);
+      setNearbyProviders(data.slice(0, 4));
       setStep(4);
     }
   };
 
-  const handleChooseProvider = (provider: Provider) => {
+  const handleChooseProvider = async (provider: Provider) => {
     setSelectedProvider(provider);
     setStep(5);
+    if (user) {
+      const dateStr = selectedDate
+        ? `${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`
+        : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const timeStr = selectedTime ?? "ASAP";
+      await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: user.id,
+          providerId: provider.id,
+          service: subcategory || selectedCategory?.name || "General Service",
+          date: dateStr,
+          time: timeStr,
+          address,
+          notes: description || undefined,
+          price: provider.hourlyRate,
+        }),
+      }).catch(() => {});
+    }
     setTimeout(() => setConfirmed(true), 1500);
   };
 

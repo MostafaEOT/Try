@@ -1,12 +1,11 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import CategoryCard from "@/components/CategoryCard";
 import ProviderCard from "@/components/ProviderCard";
 import SearchBar from "@/components/SearchBar";
-import { categories } from "@/data/categories";
-import { providers } from "@/data/providers";
+import type { ServiceCategory, Provider } from "@/types";
 
 const sortOptions = ["Recommended", "Highest Rated", "Most Reviews", "Lowest Price", "Highest Price"];
 const priceRanges = ["Any", "Under $50/hr", "$50–$80/hr", "$80–$120/hr", "$120+/hr"];
@@ -21,6 +20,13 @@ function ServicesContent() {
   const [priceRange, setPriceRange] = useState("Any");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [view, setView] = useState<"providers" | "categories">("categories");
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
+    fetch("/api/providers").then((r) => r.json()).then(setProviders).catch(() => {});
+  }, []);
 
   const filteredProviders = useMemo(() => {
     let result = [...providers];

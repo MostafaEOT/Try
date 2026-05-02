@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { categories } from "@/data/categories";
 import { useAuth, deriveAvatar } from "@/context/AuthContext";
+import type { ServiceCategory } from "@/types";
 
 function RegisterContent() {
   const searchParams = useSearchParams();
@@ -15,6 +15,11 @@ function RegisterContent() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "", phone: "", location: "", category: "", bio: "", rate: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
+  }, []);
 
   const { user, loading, login } = useAuth();
   const router = useRouter();
@@ -37,7 +42,17 @@ function RegisterContent() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password, role, avatar }),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role,
+          avatar,
+          category: formData.category,
+          bio: formData.bio,
+          rate: formData.rate,
+          location: formData.location,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Registration failed"); setSubmitting(false); return; }

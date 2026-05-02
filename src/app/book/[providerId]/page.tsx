@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import Link from "next/link";
-import { getProviderById } from "@/data/providers";
 import StarRating from "@/components/StarRating";
+import { useAuth } from "@/context/AuthContext";
+import type { Provider } from "@/types";
 
 const timeSlots = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
 
@@ -22,7 +23,9 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 
 export default function BookPage({ params }: { params: Promise<{ providerId: string }> }) {
   const { providerId } = React.use(params);
-  const provider = getProviderById(providerId);
+  const { user } = useAuth();
+  const [provider, setProvider] = useState<Provider | null>(null);
+  const [providerLoading, setProviderLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -30,6 +33,22 @@ export default function BookPage({ params }: { params: Promise<{ providerId: str
   const [notes, setNotes] = useState("");
   const [service, setService] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/providers/${providerId}`)
+      .then((r) => r.json())
+      .then((data) => { setProvider(data); setProviderLoading(false); })
+      .catch(() => setProviderLoading(false));
+  }, [providerId]);
+
+  if (providerLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!provider) {
     return (
@@ -45,8 +64,27 @@ export default function BookPage({ params }: { params: Promise<{ providerId: str
   const days = getNextDays(14);
   const availableDays = days.filter((d) => provider.availability.includes(DAY_NAMES[d.getDay()]));
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedDate || !selectedTime || !address || !service) return;
+    setSubmitting(true);
+    if (user) {
+      const dateStr = `${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`;
+      await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: user.id,
+          providerId: provider.id,
+          service,
+          date: dateStr,
+          time: selectedTime,
+          address,
+          notes: notes || undefined,
+          price: provider.hourlyRate,
+        }),
+      }).catch(() => {});
+    }
+    setSubmitting(false);
     setConfirmed(true);
   };
 
@@ -250,9 +288,10 @@ export default function BookPage({ params }: { params: Promise<{ providerId: str
                   <button onClick={() => setStep(2)} className="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-colors">Back</button>
                   <button
                     onClick={handleConfirm}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors"
+                    disabled={submitting}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl transition-colors"
                   >
-                    Confirm Booking
+                    {submitting ? "Confirming..." : "Confirm Booking"}
                   </button>
                 </div>
               </div>

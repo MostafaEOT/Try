@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import CategoryCard from "@/components/CategoryCard";
 import ProviderCard from "@/components/ProviderCard";
-import { categories } from "@/data/categories";
-import { featuredProviders } from "@/data/providers";
 import { useAuth } from "@/context/AuthContext";
+import type { ServiceCategory, Provider } from "@/types";
 
 const stats = [
   { value: "50,000+", label: "Verified Pros" },
@@ -32,12 +31,19 @@ const testimonials = [
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [featuredProviders, setFeaturedProviders] = useState<Provider[]>([]);
 
   useEffect(() => {
     if (!loading && user?.role === "worker") {
       router.replace("/dashboard/provider");
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
+    fetch("/api/providers?featured=true").then((r) => r.json()).then(setFeaturedProviders).catch(() => {});
+  }, []);
 
   if (loading) return null;
   if (user?.role === "worker") return null;
