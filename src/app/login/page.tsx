@@ -17,17 +17,29 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSubmitting(true);
     const name = deriveNameFromEmail(email);
-    login({
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      role,
-      avatar: deriveAvatar(name),
-    });
-    router.push(role === "worker" ? "/dashboard/provider" : "/");
+    const avatar = deriveAvatar(name);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role, name, avatar }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Login failed"); setSubmitting(false); return; }
+      login(data);
+      router.push(data.role === "worker" ? "/dashboard/provider" : "/");
+    } catch {
+      setError("Could not connect to server. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   if (loading || user) return null;
@@ -86,11 +98,13 @@ export default function LoginPage() {
             </div>
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 text-xs text-blue-700">
-              <span className="font-semibold">Demo:</span> any email &amp; password · use the toggle above to switch roles
+              <span className="font-semibold">Demo:</span> any email &amp; password · first login auto-creates your account
             </div>
 
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors">
-              Sign In as {role === "customer" ? "Customer" : "Pro"}
+            {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
+
+            <button type="submit" disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 rounded-xl transition-colors">
+              {submitting ? "Signing in..." : `Sign In as ${role === "customer" ? "Customer" : "Pro"}`}
             </button>
           </form>
 

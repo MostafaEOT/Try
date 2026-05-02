@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id            String     @id
+  name          String
+  icon          String
+  description   String
+  color         String
+  bgColor       String
+  count         Int        @default(0)
+  subcategories String[]
+  providers     Provider[]
+}
+
+model Provider {
+  id             String    @id
+  name           String
+  avatar         String
+  categoryId     String
+  category       Category  @relation(fields: [categoryId], references: [id])
+  subcategory    String
+  rating         Float
+  reviewCount    Int       @default(0)
+  hourlyRate     Int
+  bio            String
+  location       String
+  experience     Int
+  completedJobs  Int       @default(0)
+  responseTime   String
+  verified       Boolean   @default(false)
+  badges         String[]
+  availability   String[]
+  portfolio      String[]
+  online         Boolean   @default(false)
+  distanceKm     Float     @default(0)
+  acceptanceRate Int       @default(0)
+  reviews        Review[]
+  bookings       Booking[]
+}
+
+model Review {
+  id         String   @id
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  author     String
+  avatar     String
+  rating     Int
+  comment    String
+  date       String
+  service    String
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      String
+  avatar    String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  service    String
+  date       String
+  time       String
+  status     String   @default("pending")
+  price      Float
+  address    String
+  notes      String?
+  createdAt  DateTime @default(now())
+}

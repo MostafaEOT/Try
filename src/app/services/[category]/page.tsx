@@ -1,16 +1,33 @@
 import Link from "next/link";
 import ProviderCard from "@/components/ProviderCard";
 import { categories } from "@/data/categories";
-import { getProvidersByCategory } from "@/data/providers";
+import { prisma } from "@/lib/prisma";
+import { Provider, Review } from "@/types";
 
 export function generateStaticParams() {
   return categories.map((cat) => ({ category: cat.id }));
 }
 
+export const dynamic = "force-dynamic";
+
+type ProviderWithReviews = Provider & { reviews: Review[] };
+
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: categoryId } = await params;
   const category = categories.find((c) => c.id === categoryId);
-  const categoryProviders = getProvidersByCategory(categoryId);
+
+  let categoryProviders: ProviderWithReviews[] = [];
+  try {
+    categoryProviders = (await prisma.provider.findMany({
+      where: { categoryId },
+      include: { reviews: true },
+      orderBy: { rating: "desc" },
+    })) as ProviderWithReviews[];
+  } catch {
+    // DB not yet reachable — fall back to static data
+    const { getProvidersByCategory } = await import("@/data/providers");
+    categoryProviders = getProvidersByCategory(categoryId) as ProviderWithReviews[];
+  }
 
   if (!category) {
     return (

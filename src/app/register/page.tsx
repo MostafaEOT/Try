@@ -13,6 +13,8 @@ function RegisterContent() {
   const [step, setStep] = useState(1);
   const [role, setRole] = useState<"customer" | "worker">(initialRole);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", phone: "", location: "", category: "", bio: "", rate: "" });
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const { user, loading, login } = useAuth();
   const router = useRouter();
@@ -25,17 +27,26 @@ function RegisterContent() {
 
   const update = (field: string, value: string) => setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 2) { setStep(2); return; }
-    login({
-      id: `user-${Date.now()}`,
-      name: formData.name || "User",
-      email: formData.email,
-      role,
-      avatar: deriveAvatar(formData.name || "U"),
-    });
-    router.push(role === "worker" ? "/dashboard/provider" : "/");
+    setError("");
+    setSubmitting(true);
+    const avatar = deriveAvatar(formData.name || "U");
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password, role, avatar }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Registration failed"); setSubmitting(false); return; }
+      login(data);
+      router.push(role === "worker" ? "/dashboard/provider" : "/");
+    } catch {
+      setError("Could not connect to server. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   if (loading || user) return null;
@@ -130,8 +141,10 @@ function RegisterContent() {
               </>
             )}
 
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors mt-2">
-              {step === 1 ? "Continue" : role === "customer" ? "Create Account" : "Join as a Pro"}
+            {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
+
+            <button type="submit" disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 rounded-xl transition-colors mt-2">
+              {submitting ? "Creating account..." : step === 1 ? "Continue" : role === "customer" ? "Create Account" : "Join as a Pro"}
             </button>
           </form>
 

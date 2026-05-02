@@ -1,16 +1,26 @@
 import Link from "next/link";
 import StarRating from "@/components/StarRating";
-import { getProviderById } from "@/data/providers";
-import { providers } from "@/data/providers";
+import { providers as staticProviders } from "@/data/providers";
 import { categories } from "@/data/categories";
+import { prisma } from "@/lib/prisma";
 
 export function generateStaticParams() {
-  return providers.map((p) => ({ id: p.id }));
+  return staticProviders.map((p) => ({ id: p.id }));
 }
+
+export const dynamic = "force-dynamic";
 
 export default async function ProviderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const provider = getProviderById(id);
+
+  let provider = null;
+  try {
+    provider = await prisma.provider.findUnique({ where: { id }, include: { reviews: true } });
+  } catch {
+    const { getProviderById } = await import("@/data/providers");
+    provider = getProviderById(id) ?? null;
+  }
+
   if (!provider) {
     return (
       <div className="min-h-screen flex items-center justify-center">

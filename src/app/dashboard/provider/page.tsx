@@ -47,7 +47,17 @@ export default function ProviderDashboard() {
   }
 
   const isActive = user.isActive !== false;
-  const toggleActive = () => updateUser({ isActive: !isActive });
+  const toggleActive = async () => {
+    const next = !isActive;
+    updateUser({ isActive: next });
+    try {
+      await fetch("/api/auth/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id, isActive: next }),
+      });
+    } catch { /* silently ignore — localStorage already updated */ }
+  };
 
   const totalEarnings = mockJobs.filter((j) => j.status === "completed").reduce((sum, j) => sum + j.amount, 0);
   const thisMonthEarnings = earningsData[earningsData.length - 1].amount;
