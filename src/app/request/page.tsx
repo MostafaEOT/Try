@@ -142,10 +142,22 @@ export default function RequestPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            <Link href="/dashboard/customer" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors">
-              Track in My Bookings
+            {mode === "instant" && (
+              <Link
+                href={`/tracking/booking-001?providerId=${selectedProvider.id}&address=${encodeURIComponent(address)}&eta=${Math.round(selectedProvider.distanceKm * 5)}`}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Track Your Pro Live
+              </Link>
+            )}
+            <Link href="/dashboard/customer" className={`font-semibold py-3 rounded-xl transition-colors text-center ${mode === "instant" ? "border border-gray-200 text-gray-600 hover:bg-gray-50" : "bg-blue-600 hover:bg-blue-700 text-white"}`}>
+              {mode === "instant" ? "View My Bookings" : "Go to My Bookings"}
             </Link>
-            <Link href="/" className="border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-colors">
+            <Link href="/" className="border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-colors text-center">
               Back to Home
             </Link>
           </div>

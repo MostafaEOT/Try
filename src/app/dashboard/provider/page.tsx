@@ -88,31 +88,74 @@ export default function ProviderDashboard() {
           {activeTab === "jobs" && (
             <div className="divide-y divide-gray-50">
               {mockJobs.map((job) => (
-                <div key={job.id} className="p-5 flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm flex-shrink-0">
-                      {job.customerAvatar}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-gray-900 text-sm">{job.service}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[job.status]}`}>
-                          {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                        </span>
+                <div key={job.id} className="p-5 space-y-3">
+                  {/* Top row: customer info + amount */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-600 text-sm flex-shrink-0">
+                        {job.customerAvatar}
                       </div>
-                      <p className="text-sm text-gray-500">{job.customerName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">📅 {job.date} at {job.time} · 📍 {job.address}</p>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-bold text-gray-900">${job.amount}</p>
-                    {job.status === "pending" && (
-                      <div className="flex gap-1.5 mt-1">
-                        <button className="text-xs bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg font-medium transition-colors">Accept</button>
-                        <button className="text-xs border border-red-300 text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg font-medium transition-colors">Decline</button>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-gray-900 text-sm">{job.service}</h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[job.status]}`}>
+                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500">{job.customerName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">📅 {job.date} at {job.time}</p>
                       </div>
-                    )}
+                    </div>
+                    <p className="font-bold text-gray-900 flex-shrink-0">${job.amount}</p>
                   </div>
+
+                  {/* Customer location — shown for pending and confirmed */}
+                  {(job.status === "pending" || job.status === "confirmed") && (
+                    <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-400 font-medium">Customer Location</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">{job.address}</p>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        Navigate
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  {job.status === "pending" && (
+                    <div className="flex gap-2">
+                      <button className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
+                        ✓ Accept Job
+                      </button>
+                      <button className="flex-1 border border-red-200 text-red-500 hover:bg-red-50 text-sm font-semibold py-2.5 rounded-xl transition-colors">
+                        ✕ Decline
+                      </button>
+                    </div>
+                  )}
+                  {job.status === "confirmed" && (
+                    <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Start Job — I&apos;m on my way
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
