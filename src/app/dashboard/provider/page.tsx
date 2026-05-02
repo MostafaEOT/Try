@@ -28,7 +28,7 @@ const statusColors = {
 };
 
 export default function ProviderDashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, updateUser } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"jobs" | "earnings" | "profile">("jobs");
 
@@ -46,6 +46,9 @@ export default function ProviderDashboard() {
     );
   }
 
+  const isActive = user.isActive !== false;
+  const toggleActive = () => updateUser({ isActive: !isActive });
+
   const totalEarnings = mockJobs.filter((j) => j.status === "completed").reduce((sum, j) => sum + j.amount, 0);
   const thisMonthEarnings = earningsData[earningsData.length - 1].amount;
   const maxEarning = Math.max(...earningsData.map((e) => e.amount));
@@ -53,11 +56,32 @@ export default function ProviderDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Offline banner */}
+        {!isActive && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
+            <span className="text-xl flex-shrink-0">⚫</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">You are offline</p>
+              <p className="text-xs text-amber-600 mt-0.5">You won&apos;t receive new job requests while offline. Toggle active to start accepting jobs again.</p>
+            </div>
+            <button
+              onClick={toggleActive}
+              className="flex-shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Go Active
+            </button>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xl">
-              {user.avatar}
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xl">
+                {user.avatar}
+              </div>
+              <span className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-gray-400"}`} />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
@@ -66,12 +90,23 @@ export default function ProviderDashboard() {
                 <span className="text-sm font-medium text-gray-700">4.9</span>
                 <span className="text-xs text-gray-400">(312 reviews)</span>
               </div>
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium mt-1 inline-block">
-                🟢 Available
-              </span>
+              {/* Active / Offline toggle */}
+              <button
+                onClick={toggleActive}
+                className={`mt-1.5 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  isActive
+                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${isActive ? "bg-green-500" : "bg-gray-300"}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-200 ${isActive ? "translate-x-4" : "translate-x-0"}`} />
+                </div>
+                {isActive ? "Active — accepting jobs" : "Offline — not accepting jobs"}
+              </button>
             </div>
           </div>
-          <Link href="/services" className="text-blue-600 border border-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-xl transition-colors text-sm">
+          <Link href="/services" className="text-blue-600 border border-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-xl transition-colors text-sm flex-shrink-0">
             View Public Profile
           </Link>
         </div>

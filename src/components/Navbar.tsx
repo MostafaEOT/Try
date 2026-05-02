@@ -108,7 +108,7 @@ export default function Navbar() {
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
                       {user.avatar}
                     </div>
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-white rounded-full transition-colors ${user.isActive !== false ? "bg-green-500" : "bg-gray-400"}`} />
                   </div>
                   <span className="text-sm font-medium text-gray-700">{user.name.split(" ")[0]}</span>
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +122,9 @@ export default function Navbar() {
                       <div className="px-4 py-2 border-b border-gray-100 mb-1">
                         <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium mt-1 inline-block">🟢 Available</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${user.isActive !== false ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                          {user.isActive !== false ? "🟢 Active" : "⚫ Offline"}
+                        </span>
                       </div>
                       <Link href="/dashboard/provider" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         📋 Dashboard
@@ -190,7 +192,9 @@ export default function Navbar() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-green-600">🟢 Available</p>
+                    <p className={`text-xs font-medium ${user.isActive !== false ? "text-green-600" : "text-gray-400"}`}>
+                      {user.isActive !== false ? "🟢 Active" : "⚫ Offline"}
+                    </p>
                   </div>
                 </div>
                 <Link href="/dashboard/provider" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg">My Jobs</Link>
