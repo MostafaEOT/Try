@@ -20,35 +20,39 @@ model Category {
 }
 
 model Provider {
-  id             String    @id
+  id             String          @id
   name           String
   avatar         String
   categoryId     String
-  category       Category  @relation(fields: [categoryId], references: [id])
+  category       Category        @relation(fields: [categoryId], references: [id])
   subcategory    String
   rating         Float
-  reviewCount    Int       @default(0)
+  reviewCount    Int             @default(0)
   hourlyRate     Int
   bio            String
   location       String
   experience     Int
-  completedJobs  Int       @default(0)
+  completedJobs  Int             @default(0)
   responseTime   String
-  verified       Boolean   @default(false)
+  verified       Boolean         @default(false)
   badges         String[]
   availability   String[]
   portfolio      String[]
-  online         Boolean   @default(false)
-  distanceKm     Float     @default(0)
-  acceptanceRate Int       @default(0)
+  online         Boolean         @default(false)
+  distanceKm     Float           @default(0)
+  acceptanceRate Int             @default(0)
+  bankAccount    String?
   reviews        Review[]
   bookings       Booking[]
+  favorites      Favorite[]
+  payoutRequests PayoutRequest[]
 }
 
 model Review {
-  id         String   @id
+  id         String   @id @default(cuid())
   providerId String
   provider   Provider @relation(fields: [providerId], references: [id])
+  customerId String?
   author     String
   avatar     String
   rating     Int
@@ -58,29 +62,94 @@ model Review {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String    @unique
-  password  String
-  role      String
-  avatar    String
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  bookings  Booking[]
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          String
+  avatar        String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  bookings      Booking[]
+  favorites     Favorite[]
+  notifications Notification[]
+  disputes      Dispute[]
+  sentMessages  Message[]      @relation("MessageSender")
 }
 
 model Booking {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   customerId String
-  customer   User     @relation(fields: [customerId], references: [id])
+  customer   User      @relation(fields: [customerId], references: [id])
   providerId String
-  provider   Provider @relation(fields: [providerId], references: [id])
+  provider   Provider  @relation(fields: [providerId], references: [id])
   service    String
   date       String
   time       String
-  status     String   @default("pending")
+  status     String    @default("pending")
   price      Float
   address    String
   notes      String?
+  jobPhotos  String[]  @default([])
+  reviewed   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  dispute    Dispute?
+  messages   Message[]
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
   createdAt  DateTime @default(now())
+
+  @@unique([userId, providerId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  bookingId String?
+  createdAt DateTime @default(now())
+}
+
+model Dispute {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id])
+  reason      String
+  description String
+  status      String   @default("open")
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  senderId  String
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model PayoutRequest {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id])
+  amount      Float
+  status      String   @default("pending")
+  bankAccount String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

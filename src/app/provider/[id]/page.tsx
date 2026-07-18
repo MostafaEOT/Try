@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StarRating from "@/components/StarRating";
+import FavoriteButton from "@/components/FavoriteButton";
 import { providers as staticProviders } from "@/data/providers";
 import { categories } from "@/data/categories";
 import { prisma } from "@/lib/prisma";
@@ -172,9 +173,12 @@ export default async function ProviderPage({ params }: { params: Promise<{ id: s
                   Book Now
                 </button>
               </Link>
-              <button className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 rounded-xl transition-colors">
-                Message {provider.name.split(" ")[0]}
-              </button>
+              <div className="flex gap-2 mb-3">
+                <button className="flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3 rounded-xl transition-colors">
+                  Message
+                </button>
+                <FavoriteButton providerId={provider.id} />
+              </div>
 
               <div className="mt-5 space-y-3 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
