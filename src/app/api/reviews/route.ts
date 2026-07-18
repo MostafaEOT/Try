@@ -19,14 +19,11 @@ export async function POST(request: Request) {
     data: { rating: Math.round(avg * 10) / 10, reviewCount: allReviews.length },
   });
 
-  const provider = await prisma.provider.findUnique({ where: { id: providerId }, select: { name: true } });
-  if (provider) {
-    const providerUser = await prisma.user.findFirst({ where: { name: provider.name } });
-    if (providerUser) {
-      await prisma.notification.create({
-        data: { userId: providerUser.id, type: "new_review", message: `${author} left you a ${rating}-star review.`, bookingId },
-      });
-    }
+  const provider = await prisma.provider.findUnique({ where: { id: providerId }, select: { userId: true } });
+  if (provider?.userId) {
+    await prisma.notification.create({
+      data: { userId: provider.userId, type: "new_review", message: `${author} left you a ${rating}-star review.`, bookingId },
+    });
   }
 
   return NextResponse.json(review, { status: 201 });

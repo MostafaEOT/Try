@@ -42,6 +42,8 @@ model Provider {
   distanceKm     Float           @default(0)
   acceptanceRate Int             @default(0)
   bankAccount    String?
+  userId         String?  @unique
+  user           User?    @relation("ProviderUser", fields: [userId], references: [id])
   reviews        Review[]
   bookings       Booking[]
   favorites      Favorite[]
@@ -70,11 +72,12 @@ model User {
   avatar        String
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
-  bookings      Booking[]
-  favorites     Favorite[]
-  notifications Notification[]
-  disputes      Dispute[]
-  sentMessages  Message[]      @relation("MessageSender")
+  bookings        Booking[]
+  favorites       Favorite[]
+  notifications   Notification[]
+  disputes        Dispute[]
+  sentMessages    Message[]      @relation("MessageSender")
+  providerProfile Provider?      @relation("ProviderUser")
 }
 
 model Booking {

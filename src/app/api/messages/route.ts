@@ -24,18 +24,14 @@ export async function POST(request: Request) {
     where: { id: bookingId },
     include: {
       customer: { select: { id: true } },
-      provider: { select: { name: true } },
+      provider: { select: { userId: true } },
     },
   });
 
   if (booking) {
-    let recipientId: string | undefined;
-    if (senderId === booking.customerId) {
-      const providerUser = await prisma.user.findFirst({ where: { name: booking.provider.name } });
-      recipientId = providerUser?.id;
-    } else {
-      recipientId = booking.customerId;
-    }
+    const recipientId = senderId === booking.customerId
+      ? booking.provider.userId ?? undefined
+      : booking.customerId;
     if (recipientId) {
       await prisma.notification.create({
         data: { userId: recipientId, type: "new_message", message: "You have a new message about your booking.", bookingId },

@@ -23,6 +23,10 @@ export async function POST(request: Request) {
     const existing = await prisma.provider.findFirst({ where: { name } });
     if (existing) {
       providerId = existing.id;
+      // Link the userId if not already set
+      if (!existing.userId) {
+        await prisma.provider.update({ where: { id: existing.id }, data: { userId: user.id } }).catch(() => {});
+      }
     } else {
       const categoryId = category || "cleaning";
       // Verify the category exists before creating the provider
@@ -51,6 +55,7 @@ export async function POST(request: Request) {
           online: false,
           distanceKm: 0,
           acceptanceRate: 0,
+          userId: user.id,
         },
       });
       providerId = provider.id;
