@@ -20,18 +20,22 @@ export async function POST(request: Request) {
     }
   }
 
-  // For workers, find their linked Provider profile (by userId first, fall back to name)
   let providerId: string | undefined;
   if (user.role === "worker") {
     let provider = await prisma.provider.findUnique({ where: { userId: user.id } });
     if (!provider) {
-      // Legacy fallback: link by name and save the userId for future logins
       provider = await prisma.provider.findFirst({ where: { name: user.name } });
       if (provider) {
         await prisma.provider.update({ where: { id: provider.id }, data: { userId: user.id } }).catch(() => {});
       }
     }
     if (provider) providerId = provider.id;
+  }
+
+  let shopId: string | undefined;
+  if (user.role === "shop") {
+    const shop = await prisma.shop.findUnique({ where: { userId: user.id } });
+    if (shop) shopId = shop.id;
   }
 
   return NextResponse.json({
@@ -42,5 +46,6 @@ export async function POST(request: Request) {
     avatar: user.avatar,
     isActive: user.isActive,
     providerId,
+    shopId,
   });
 }

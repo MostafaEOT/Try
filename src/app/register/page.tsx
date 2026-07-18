@@ -8,10 +8,10 @@ import type { ServiceCategory } from "@/types";
 
 function RegisterContent() {
   const searchParams = useSearchParams();
-  const initialRole = searchParams.get("role") === "worker" ? "worker" : "customer";
+  const initialRole = searchParams.get("role") === "worker" ? "worker" : searchParams.get("role") === "shop" ? "shop" : "customer";
 
   const [step, setStep] = useState(1);
-  const [role, setRole] = useState<"customer" | "worker">(initialRole);
+  const [role, setRole] = useState<"customer" | "worker" | "shop">(initialRole);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", phone: "", location: "", category: "", bio: "", rate: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +26,9 @@ function RegisterContent() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(user.role === "worker" ? "/dashboard/provider" : "/");
+      if (user.role === "worker") router.replace("/dashboard/provider");
+      else if (user.role === "shop") router.replace("/dashboard/shop");
+      else router.replace("/");
     }
   }, [user, loading, router]);
 
@@ -57,7 +59,9 @@ function RegisterContent() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Registration failed"); setSubmitting(false); return; }
       login(data);
-      router.push(role === "worker" ? "/dashboard/provider" : "/");
+      if (role === "worker") router.push("/dashboard/provider");
+      else if (role === "shop") router.push("/dashboard/shop");
+      else router.push("/");
     } catch {
       setError("Could not connect to server. Please try again.");
       setSubmitting(false);
@@ -92,15 +96,21 @@ function RegisterContent() {
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
             <button
               onClick={() => setRole("customer")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
             >
               I need services
             </button>
             <button
               onClick={() => setRole("worker")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
             >
               I offer services
+            </button>
+            <button
+              onClick={() => setRole("shop")}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "shop" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
+              I run a Shop
             </button>
           </div>
 
@@ -153,13 +163,19 @@ function RegisterContent() {
                     </div>
                   </>
                 )}
+                {role === "shop" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">About Your Shop</label>
+                    <textarea value={formData.bio} onChange={(e) => update("bio", e.target.value)} placeholder="Describe the products you sell, your specialties, brands, etc." rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                  </div>
+                )}
               </>
             )}
 
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
 
             <button type="submit" disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 rounded-xl transition-colors mt-2">
-              {submitting ? "Creating account..." : step === 1 ? "Continue" : role === "customer" ? "Create Account" : "Join as a Pro"}
+              {submitting ? "Creating account..." : step === 1 ? "Continue" : role === "customer" ? "Create Account" : role === "shop" ? "Open My Shop" : "Join as a Pro"}
             </button>
           </form>
 

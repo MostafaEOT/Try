@@ -11,12 +11,54 @@ interface BookingRecord {
   time: string;
   status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled";
   price: number;
+  materialsTotal: number;
   address: string;
   notes?: string;
   jobPhotos: string[];
   reviewed: boolean;
   customer: { id: string; name: string; avatar: string };
   dispute?: { id: string; status: string; reason: string } | null;
+}
+
+interface ShopRecord {
+  id: string;
+  name: string;
+  avatar: string;
+  description: string;
+  location: string;
+  online: boolean;
+  products: { id: string }[];
+}
+
+interface ProductRecord {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  unit: string;
+  category: string;
+  inStock: boolean;
+  shop: { id: string; name: string };
+}
+
+interface CartItem {
+  productId: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  unit: string;
+}
+
+interface MaterialRequestRecord {
+  id: string;
+  bookingId: string;
+  status: string;
+  totalCost: number;
+  notes: string;
+  createdAt: string;
+  shop: { id: string; name: string };
+  booking: { id: string; service: string };
+  items: Array<{ quantity: number; unitPrice: number; product: { name: string; unit: string } }>;
 }
 
 interface Review {
@@ -68,7 +110,7 @@ const statusColors = {
 
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-type Tab = "requests" | "active" | "calendar" | "earnings" | "ratings" | "profile" | "payout";
+type Tab = "requests" | "active" | "calendar" | "earnings" | "ratings" | "profile" | "payout" | "materials";
 
 export default function ProviderDashboard() {
   const { user, loading } = useAuth();
@@ -100,6 +142,16 @@ export default function ProviderDashboard() {
   const [payoutBank, setPayoutBank] = useState("");
   const [payoutSubmitting, setPayoutSubmitting] = useState(false);
   const [payoutMsg, setPayoutMsg] = useState("");
+
+  const [shops, setShops] = useState<ShopRecord[]>([]);
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const [shopProducts, setShopProducts] = useState<ProductRecord[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [materialBookingId, setMaterialBookingId] = useState("");
+  const [materialNotes, setMaterialNotes] = useState("");
+  const [submittingMaterial, setSubmittingMaterial] = useState(false);
+  const [materialMsg, setMaterialMsg] = useState("");
+  const [myMaterialRequests, setMyMaterialRequests] = useState<MaterialRequestRecord[]>([]);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "worker")) router.replace("/login");
@@ -152,6 +204,17 @@ export default function ProviderDashboard() {
       fetchPayouts();
     }
   }, [user, fetchBookings, fetchProfile, fetchReviews, fetchPayouts]);
+
+  useEffect(() => {
+    if (activeTab === "materials") {
+      fetchShops();
+      fetchMyMaterialRequests();
+    }
+  }, [activeTab, fetchShops, fetchMyMaterialRequests]);
+
+  useEffect(() => {
+    if (selectedShopId) fetchShopProducts(selectedShopId);
+  }, [selectedShopId, fetchShopProducts]);
 
   const fetchMessages = useCallback(async (bookingId: string) => {
     const data = await fetch(`/api/messages?bookingId=${bookingId}`).then((r) => r.json()).catch(() => []);
@@ -226,6 +289,57 @@ export default function ProviderDashboard() {
     fetchBookings();
   };
 
+  const fetchShops = useCallback(async () => {
+    const data = await fetch("/api/shops").then((r) => r.json()).catch(() => []);
+    setShops(Array.isArray(data) ? data : []);
+  }, []);
+
+  const fetchShopProducts = useCallback(async (shopId: string) => {
+    const data = await fetch(`/api/products?shopId=${shopId}`).then((r) => r.json()).catch(() => []);
+    setShopProducts(Array.isArray(data) ? data : []);
+  }, []);
+
+  const fetchMyMaterialRequests = useCallback(async () => {
+    if (!user) return;
+    const data = await fetch(`/api/material-requests?workerId=${user.id}`).then((r) => r.json()).catch(() => []);
+    setMyMaterialRequests(Array.isArray(data) ? data : []);
+  }, [user]);
+
+  const addToCart = (product: ProductRecord) => {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.productId === product.id);
+      if (existing) return prev.map((c) => c.productId === product.id ? { ...c, quantity: c.quantity + 1 } : c);
+      return [...prev, { productId: product.id, name: product.name, unitPrice: product.price, quantity: 1, unit: product.unit }];
+    });
+  };
+
+  const removeFromCart = (productId: string) => setCart((prev) => prev.filter((c) => c.productId !== productId));
+
+  const submitMaterialRequest = async () => {
+    if (!user || !materialBookingId || cart.length === 0 || !selectedShopId) return;
+    setSubmittingMaterial(true);
+    await fetch("/api/material-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bookingId: materialBookingId,
+        workerId: user.id,
+        shopId: selectedShopId,
+        items: cart.map((c) => ({ productId: c.productId, quantity: c.quantity })),
+        notes: materialNotes,
+      }),
+    }).catch(() => {});
+    setSubmittingMaterial(false);
+    setMaterialMsg("Request sent to customer for approval!");
+    setCart([]);
+    setMaterialBookingId("");
+    setMaterialNotes("");
+    setSelectedShopId(null);
+    setShopProducts([]);
+    setTimeout(() => setMaterialMsg(""), 5000);
+    fetchMyMaterialRequests();
+  };
+
   const requestPayout = async () => {
     if (!user?.providerId || !payoutAmount || !payoutBank.trim()) return;
     setPayoutSubmitting(true);
@@ -277,6 +391,7 @@ export default function ProviderDashboard() {
     { key: "ratings", label: "Ratings" },
     { key: "profile", label: "Profile" },
     { key: "payout", label: "Payout" },
+    { key: "materials", label: "Materials" },
   ];
 
   const calendarBookings = bookings.filter((b) => b.status !== "cancelled");
@@ -774,6 +889,174 @@ export default function ProviderDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+          {/* Materials */}
+          {activeTab === "materials" && (
+            <div className="p-5">
+              {materialMsg && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-700 font-medium">
+                  {materialMsg}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left: shop + product browser */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">Browse Shops</h3>
+                  {shops.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-xl">
+                      <p className="text-5xl mb-2">🏪</p>
+                      <p className="text-gray-500 text-sm">No shops registered yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 mb-4">
+                      {shops.map((shop) => (
+                        <button
+                          key={shop.id}
+                          onClick={() => setSelectedShopId(selectedShopId === shop.id ? null : shop.id)}
+                          className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                            selectedShopId === shop.id ? "border-blue-300 bg-blue-50" : "border-gray-100 bg-white hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900 text-sm">{shop.name}</p>
+                              {shop.location && <p className="text-xs text-gray-400">{shop.location}</p>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">{shop.products.length} items</span>
+                              <span className={`w-2 h-2 rounded-full ${shop.online ? "bg-green-500" : "bg-gray-300"}`} />
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedShopId && shopProducts.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Products</h4>
+                      <div className="space-y-2">
+                        {shopProducts.map((product) => (
+                          <div key={product.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-white">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                              {product.description && <p className="text-xs text-gray-400">{product.description}</p>}
+                              <p className="text-xs text-blue-600 font-medium mt-0.5">${product.price.toFixed(2)}/{product.unit}</p>
+                            </div>
+                            <button
+                              onClick={() => addToCart(product)}
+                              disabled={!product.inStock}
+                              className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-3 py-1.5 rounded-lg"
+                            >
+                              {product.inStock ? "Add" : "Out of Stock"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: cart + submit */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">Purchase Request</h3>
+                  {cart.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-xl">
+                      <p className="text-5xl mb-2">🛒</p>
+                      <p className="text-gray-500 text-sm">Select products from a shop to add them here.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-4">
+                      <div className="space-y-2 mb-3">
+                        {cart.map((item) => (
+                          <div key={item.productId} className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                              <p className="text-xs text-gray-500">${item.unitPrice.toFixed(2)}/{item.unit} × {item.quantity}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-gray-900">${(item.unitPrice * item.quantity).toFixed(2)}</p>
+                              <button onClick={() => removeFromCart(item.productId)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-orange-200 pt-2 flex justify-between">
+                        <span className="text-sm font-semibold text-gray-700">Total</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          ${cart.reduce((s, c) => s + c.unitPrice * c.quantity, 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {cart.length > 0 && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Attach to Booking *</label>
+                        <select
+                          value={materialBookingId}
+                          onChange={(e) => setMaterialBookingId(e.target.value)}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select an active job...</option>
+                          {bookings
+                            .filter((b) => b.status === "in-progress")
+                            .map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.service} – {b.customer.name} ({b.date})
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                        <input
+                          value={materialNotes}
+                          onChange={(e) => setMaterialNotes(e.target.value)}
+                          placeholder="Why you need these materials..."
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <button
+                        onClick={submitMaterialRequest}
+                        disabled={submittingMaterial || !materialBookingId}
+                        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-2.5 rounded-xl transition-colors"
+                      >
+                        {submittingMaterial ? "Sending..." : "Send to Customer for Approval"}
+                      </button>
+                    </div>
+                  )}
+
+                  {myMaterialRequests.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">My Requests</h4>
+                      <div className="space-y-2">
+                        {myMaterialRequests.map((req) => (
+                          <div key={req.id} className="p-3 border border-gray-100 rounded-xl">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium text-gray-900">{req.shop.name}</p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                req.status === "approved" ? "bg-blue-100 text-blue-700" :
+                                req.status === "rejected" ? "bg-red-100 text-red-700" :
+                                req.status === "delivered" ? "bg-green-100 text-green-700" :
+                                "bg-yellow-100 text-yellow-700"
+                              }`}>
+                                {req.status === "pending_approval" ? "Awaiting" :
+                                 req.status === "approved" ? "Approved" :
+                                 req.status === "rejected" ? "Rejected" : "Delivered"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">{req.booking.service} · ${req.totalCost.toFixed(2)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

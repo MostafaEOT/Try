@@ -76,8 +76,10 @@ model User {
   favorites       Favorite[]
   notifications   Notification[]
   disputes        Dispute[]
-  sentMessages    Message[]      @relation("MessageSender")
-  providerProfile Provider?      @relation("ProviderUser")
+  sentMessages           Message[]        @relation("MessageSender")
+  providerProfile        Provider?        @relation("ProviderUser")
+  shopProfile            Shop?            @relation("ShopUser")
+  workerMaterialRequests MaterialRequest[] @relation("WorkerMaterialRequests")
 }
 
 model Booking {
@@ -90,14 +92,16 @@ model Booking {
   date       String
   time       String
   status     String    @default("pending")
-  price      Float
-  address    String
+  price            Float
+  materialsTotal   Float             @default(0)
+  address          String
   notes      String?
   jobPhotos  String[]  @default([])
   reviewed   Boolean   @default(false)
   createdAt  DateTime  @default(now())
-  dispute    Dispute?
-  messages   Message[]
+  dispute          Dispute?
+  messages         Message[]
+  materialRequests MaterialRequest[]
 }
 
 model Favorite {
@@ -155,4 +159,61 @@ model PayoutRequest {
   bankAccount String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Shop {
+  id          String            @id @default(cuid())
+  name        String
+  avatar      String            @default("")
+  description String            @default("")
+  location    String            @default("")
+  phone       String            @default("")
+  specialties String[]
+  online      Boolean           @default(true)
+  userId      String            @unique
+  user        User              @relation("ShopUser", fields: [userId], references: [id])
+  products    Product[]
+  orders      MaterialRequest[]
+  createdAt   DateTime          @default(now())
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  shopId      String
+  shop        Shop        @relation(fields: [shopId], references: [id])
+  name        String
+  description String      @default("")
+  price       Float
+  unit        String      @default("unit")
+  category    String      @default("")
+  inStock     Boolean     @default(true)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+}
+
+model MaterialRequest {
+  id         String      @id @default(cuid())
+  bookingId  String
+  booking    Booking     @relation(fields: [bookingId], references: [id])
+  shopId     String
+  shop       Shop        @relation(fields: [shopId], references: [id])
+  workerId   String
+  worker     User        @relation("WorkerMaterialRequests", fields: [workerId], references: [id])
+  status     String      @default("pending_approval")
+  totalCost  Float       @default(0)
+  notes      String      @default("")
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model OrderItem {
+  id                String          @id @default(cuid())
+  materialRequestId String
+  materialRequest   MaterialRequest @relation(fields: [materialRequestId], references: [id])
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id])
+  quantity          Int
+  unitPrice         Float
+  createdAt         DateTime        @default(now())
 }

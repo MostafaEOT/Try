@@ -7,13 +7,15 @@ import { useAuth, deriveNameFromEmail, deriveAvatar } from "@/context/AuthContex
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"customer" | "worker">("customer");
+  const [role, setRole] = useState<"customer" | "worker" | "shop">("customer");
   const { user, loading, login } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(user.role === "worker" ? "/dashboard/provider" : "/");
+      if (user.role === "worker") router.replace("/dashboard/provider");
+      else if (user.role === "shop") router.replace("/dashboard/shop");
+      else router.replace("/");
     }
   }, [user, loading, router]);
 
@@ -35,7 +37,9 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Login failed"); setSubmitting(false); return; }
       login(data);
-      router.push(data.role === "worker" ? "/dashboard/provider" : "/");
+      if (data.role === "worker") router.push("/dashboard/provider");
+      else if (data.role === "shop") router.push("/dashboard/shop");
+      else router.push("/");
     } catch {
       setError("Could not connect to server. Please try again.");
       setSubmitting(false);
@@ -58,15 +62,21 @@ export default function LoginPage() {
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
             <button
               onClick={() => setRole("customer")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "customer" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
             >
               I&apos;m a Customer
             </button>
             <button
               onClick={() => setRole("worker")}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "worker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
             >
               I&apos;m a Pro
+            </button>
+            <button
+              onClick={() => setRole("shop")}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${role === "shop" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+            >
+              I&apos;m a Shop
             </button>
           </div>
 
@@ -104,7 +114,7 @@ export default function LoginPage() {
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">{error}</p>}
 
             <button type="submit" disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 rounded-xl transition-colors">
-              {submitting ? "Signing in..." : `Sign In as ${role === "customer" ? "Customer" : "Pro"}`}
+              {submitting ? "Signing in..." : `Sign In as ${role === "customer" ? "Customer" : role === "shop" ? "Shop" : "Pro"}`}
             </button>
           </form>
 

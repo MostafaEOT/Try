@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type UserRole = "customer" | "worker";
+export type UserRole = "customer" | "worker" | "shop";
 
 export interface AuthUser {
   id: string;
@@ -11,6 +11,7 @@ export interface AuthUser {
   avatar: string;
   isActive?: boolean;
   providerId?: string;
+  shopId?: string;
 }
 
 interface AuthContextType {

@@ -16,20 +16,18 @@ export async function POST(request: Request) {
     data: { name, email, password: hashed, role, avatar },
   });
 
-  // For workers, create or link a Provider profile
   let providerId: string | undefined;
+  let shopId: string | undefined;
+
   if (role === "worker") {
-    // Check if a seeded provider already has this name
-    const existing = await prisma.provider.findFirst({ where: { name } });
-    if (existing) {
-      providerId = existing.id;
-      // Link the userId if not already set
-      if (!existing.userId) {
-        await prisma.provider.update({ where: { id: existing.id }, data: { userId: user.id } }).catch(() => {});
+    const existingProvider = await prisma.provider.findFirst({ where: { name } });
+    if (existingProvider) {
+      providerId = existingProvider.id;
+      if (!existingProvider.userId) {
+        await prisma.provider.update({ where: { id: existingProvider.id }, data: { userId: user.id } }).catch(() => {});
       }
     } else {
       const categoryId = category || "cleaning";
-      // Verify the category exists before creating the provider
       const cat = await prisma.category.findUnique({ where: { id: categoryId } });
       const safeCategory = cat ? categoryId : "cleaning";
 
@@ -62,6 +60,19 @@ export async function POST(request: Request) {
     }
   }
 
+  if (role === "shop") {
+    const shop = await prisma.shop.create({
+      data: {
+        name,
+        avatar,
+        description: bio || "",
+        location: location || "",
+        userId: user.id,
+      },
+    });
+    shopId = shop.id;
+  }
+
   return NextResponse.json({
     id: user.id,
     name: user.name,
@@ -70,5 +81,6 @@ export async function POST(request: Request) {
     avatar: user.avatar,
     isActive: user.isActive,
     providerId,
+    shopId,
   });
 }

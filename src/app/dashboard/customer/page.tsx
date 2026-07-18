@@ -12,12 +12,29 @@ interface BookingRecord {
   time: string;
   status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled";
   price: number;
+  materialsTotal: number;
   address: string;
   notes?: string;
   reviewed: boolean;
   jobPhotos: string[];
   provider: { id: string; name: string; avatar: string; subcategory: string };
   dispute?: { id: string; status: string; reason: string } | null;
+}
+
+interface MaterialItem {
+  quantity: number;
+  unitPrice: number;
+  product: { name: string; unit: string };
+}
+
+interface MaterialRequestRecord {
+  id: string;
+  status: string;
+  totalCost: number;
+  notes: string;
+  createdAt: string;
+  shop: { id: string; name: string };
+  items: MaterialItem[];
 }
 
 interface FavoriteProvider {
@@ -83,6 +100,9 @@ export default function CustomerDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [showMaterials, setShowMaterials] = useState<string | null>(null);
+  const [bookingMaterialRequests, setBookingMaterialRequests] = useState<MaterialRequestRecord[]>([]);
 
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
@@ -154,6 +174,21 @@ export default function CustomerDashboard() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const fetchMaterialRequests = useCallback(async (bookingId: string) => {
+    const data = await fetch(`/api/material-requests?bookingId=${bookingId}`).then((r) => r.json()).catch(() => []);
+    setBookingMaterialRequests(Array.isArray(data) ? data : []);
+  }, []);
+
+  const respondToMaterial = async (requestId: string, status: "approved" | "rejected") => {
+    await fetch(`/api/material-requests/${requestId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => {});
+    if (showMaterials) fetchMaterialRequests(showMaterials);
+    fetchBookings();
+  };
 
   const cancelBooking = async (id: string) => {
     await fetch(`/api/bookings/${id}`, {
@@ -259,7 +294,7 @@ export default function CustomerDashboard() {
   const upcoming = bookings.filter((b) => ["pending", "confirmed", "in-progress"].includes(b.status));
   const past = bookings.filter((b) => ["completed", "cancelled"].includes(b.status));
   const completed = past.filter((b) => b.status === "completed");
-  const totalSpent = completed.reduce((s, b) => s + b.price, 0);
+  const totalSpent = completed.reduce((s, b) => s + b.price + (b.materialsTotal || 0), 0);
   const unreadCount = notifications.filter((n) => !n.read).length;
   const shownBookings = activeTab === "upcoming" ? upcoming : past;
 
@@ -354,6 +389,18 @@ export default function CustomerDashboard() {
                         >
                           💬 Chat
                         </button>
+                        {booking.status === "in-progress" && (
+                          <button
+                            onClick={() => {
+                              if (showMaterials === booking.id) { setShowMaterials(null); return; }
+                              setShowMaterials(booking.id);
+                              fetchMaterialRequests(booking.id);
+                            }}
+                            className="block text-xs text-orange-500 hover:text-orange-600 font-medium"
+                          >
+                            🛒 Materials
+                          </button>
+                        )}
                         {booking.status === "completed" && !booking.reviewed && (
                           <button onClick={() => setShowReview(booking.id)} className="block text-xs text-yellow-600 hover:text-yellow-700 font-medium">
                             ⭐ Review
@@ -380,6 +427,65 @@ export default function CustomerDashboard() {
                     {booking.dispute && (
                       <div className="mt-3 px-3 py-2 bg-red-50 rounded-lg text-xs text-red-700 font-medium">
                         🚩 Dispute ({booking.dispute.status}): {booking.dispute.reason}
+                      </div>
+                    )}
+
+                    {showMaterials === booking.id && (
+                      <div className="mt-4 p-4 bg-orange-50 rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-semibold text-gray-900">Material Purchases</h4>
+                          <button onClick={() => setShowMaterials(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+                        </div>
+                        {bookingMaterialRequests.length === 0 ? (
+                          <p className="text-xs text-gray-500 text-center py-3">No material requests yet.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {bookingMaterialRequests.map((req) => (
+                              <div key={req.id} className="bg-white rounded-lg p-3 border border-orange-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">{req.shop.name}</p>
+                                    <p className="text-xs text-gray-500">{req.items.length} item(s) · ${req.totalCost.toFixed(2)}</p>
+                                  </div>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                    req.status === "approved" ? "bg-blue-100 text-blue-700" :
+                                    req.status === "rejected" ? "bg-red-100 text-red-700" :
+                                    req.status === "delivered" ? "bg-green-100 text-green-700" :
+                                    "bg-yellow-100 text-yellow-700"
+                                  }`}>
+                                    {req.status === "pending_approval" ? "Needs Approval" :
+                                     req.status === "approved" ? "Approved" :
+                                     req.status === "rejected" ? "Rejected" : "Delivered"}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 mb-2">
+                                  {req.items.map((item, i) => (
+                                    <div key={i} className="flex justify-between text-xs text-gray-600">
+                                      <span>{item.product.name} × {item.quantity} {item.product.unit}</span>
+                                      <span>${(item.unitPrice * item.quantity).toFixed(2)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {req.status === "pending_approval" && (
+                                  <div className="flex gap-2 mt-2">
+                                    <button
+                                      onClick={() => respondToMaterial(req.id, "approved")}
+                                      className="flex-1 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold py-1.5 rounded-lg"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => respondToMaterial(req.id, "rejected")}
+                                      className="flex-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-1.5 rounded-lg"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -565,7 +671,7 @@ export default function CustomerDashboard() {
                   {notifications.map((n) => (
                     <div key={n.id} className={`flex items-start gap-3 p-3 rounded-xl ${n.read ? "bg-white border border-gray-100" : "bg-blue-50 border border-blue-100"}`}>
                       <span className="text-lg mt-0.5">
-                        {n.type.includes("message") ? "💬" : n.type.includes("completed") ? "✅" : n.type.includes("review") ? "⭐" : "📋"}
+                        {n.type === "material_request" ? "🛒" : n.type.includes("message") ? "💬" : n.type.includes("completed") ? "✅" : n.type.includes("review") ? "⭐" : "📋"}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm ${n.read ? "text-gray-700" : "text-gray-900 font-medium"}`}>{n.message}</p>
@@ -599,7 +705,24 @@ export default function CustomerDashboard() {
                         <p className="text-xs text-gray-500">{b.provider.name} · {b.date}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-gray-900">${b.price.toFixed(2)}</p>
+                        {b.materialsTotal > 0 ? (
+                          <div className="text-xs text-gray-500 space-y-0.5 mb-1">
+                            <div className="flex justify-between gap-6">
+                              <span>Labor</span>
+                              <span>${b.price.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between gap-6">
+                              <span>Materials</span>
+                              <span>${b.materialsTotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between gap-6 font-bold text-gray-900 border-t border-gray-200 pt-0.5">
+                              <span>Total</span>
+                              <span>${(b.price + b.materialsTotal).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="font-bold text-gray-900 mb-1">${b.price.toFixed(2)}</p>
+                        )}
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Paid</span>
                       </div>
                     </div>
