@@ -20,14 +20,20 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const { name, email, avatar } = await request.json();
-  const user = await prisma.user.update({
-    where: { id },
-    data: {
-      ...(name && { name }),
-      ...(email && { email }),
-      ...(avatar && { avatar }),
-    },
-    select: { id: true, name: true, email: true, role: true, avatar: true },
-  });
-  return NextResponse.json(user);
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(email && { email }),
+        ...(avatar && { avatar }),
+      },
+      select: { id: true, name: true, email: true, role: true, avatar: true },
+    });
+    return NextResponse.json(user);
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === "P2025") return NextResponse.json({ error: "Not found" }, { status: 404 });
+    throw e;
+  }
 }

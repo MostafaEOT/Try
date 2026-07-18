@@ -290,7 +290,7 @@ export default function CustomerDashboard() {
             { label: "Total Bookings", value: bookings.length, icon: "📋" },
             { label: "Completed", value: completed.length, icon: "✅" },
             { label: "Upcoming", value: upcoming.length, icon: "📅" },
-            { label: "Total Spent", value: `$${totalSpent}`, icon: "💳" },
+            { label: "Total Spent", value: `$${totalSpent.toFixed(2)}`, icon: "💳" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-4">
               <p className="text-2xl mb-1">{stat.icon}</p>
@@ -599,7 +599,7 @@ export default function CustomerDashboard() {
                         <p className="text-xs text-gray-500">{b.provider.name} · {b.date}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-gray-900">${b.price}</p>
+                        <p className="font-bold text-gray-900">${b.price.toFixed(2)}</p>
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Paid</span>
                       </div>
                     </div>

@@ -6,6 +6,10 @@ export async function GET(request: Request) {
   const customerId = searchParams.get("customerId");
   const providerId = searchParams.get("providerId");
 
+  if (!customerId && !providerId) {
+    return NextResponse.json({ error: "customerId or providerId required" }, { status: 400 });
+  }
+
   const bookings = await prisma.booking.findMany({
     where: {
       ...(customerId ? { customerId } : {}),
@@ -14,6 +18,7 @@ export async function GET(request: Request) {
     include: {
       provider: { select: { id: true, name: true, avatar: true, subcategory: true, hourlyRate: true } },
       customer: { select: { id: true, name: true, avatar: true } },
+      dispute: { select: { id: true, status: true, reason: true } },
     },
     orderBy: { createdAt: "desc" },
   });

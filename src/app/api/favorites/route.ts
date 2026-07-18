@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     include: { provider: true },
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json(favorites.map((f) => f.provider));
+  return NextResponse.json(favorites.map((f: { provider: unknown }) => f.provider));
 }
 
 export async function POST(request: Request) {

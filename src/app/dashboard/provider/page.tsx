@@ -249,6 +249,18 @@ export default function ProviderDashboard() {
     );
   }
 
+  if (!user.providerId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-5xl mb-4">⚠️</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Provider profile not linked</h2>
+          <p className="text-gray-500">Your account is not connected to a provider profile. Please contact support.</p>
+        </div>
+      </div>
+    );
+  }
+
   const pending = bookings.filter((b) => b.status === "pending");
   const active = bookings.filter((b) => ["confirmed", "in-progress"].includes(b.status));
   const completed = bookings.filter((b) => b.status === "completed");
@@ -299,7 +311,7 @@ export default function ProviderDashboard() {
           {[
             { label: "Pending", value: pending.length, icon: "⏳" },
             { label: "Completed", value: completed.length, icon: "✅" },
-            { label: "Total Earned", value: `$${totalEarnings}`, icon: "💰" },
+            { label: "Total Earned", value: `$${totalEarnings.toFixed(2)}`, icon: "💰" },
             { label: "Avg Rating", value: avgRating, icon: "⭐" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-4">
@@ -548,7 +560,7 @@ export default function ProviderDashboard() {
                 {[
                   { label: "Total Earned", value: `$${totalEarnings}` },
                   { label: "Jobs Done", value: completed.length },
-                  { label: "Avg per Job", value: completed.length ? `$${Math.round(totalEarnings / completed.length)}` : "–" },
+                  { label: "Avg per Job", value: completed.length ? `$${(totalEarnings / completed.length).toFixed(2)}` : "–" },
                 ].map((s) => (
                   <div key={s.label} className="bg-gray-50 rounded-xl p-4 text-center">
                     <p className="text-xl font-bold text-gray-900">{s.value}</p>
@@ -708,7 +720,7 @@ export default function ProviderDashboard() {
               <h3 className="font-semibold text-gray-900 mb-5">Earnings Payout</h3>
               <div className="bg-green-50 rounded-xl p-4 mb-6">
                 <p className="text-sm text-gray-600">Available to withdraw</p>
-                <p className="text-3xl font-bold text-green-700">${totalEarnings}</p>
+                <p className="text-3xl font-bold text-green-700">${totalEarnings.toFixed(2)}</p>
               </div>
               <div className="space-y-4 mb-6">
                 <div>

@@ -25,6 +25,12 @@ export async function PATCH(
   for (const key of allowed) {
     if (key in body) data[key] = body[key];
   }
-  const provider = await prisma.provider.update({ where: { id }, data });
-  return NextResponse.json(provider);
+  try {
+    const provider = await prisma.provider.update({ where: { id }, data });
+    return NextResponse.json(provider);
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === "P2025") return NextResponse.json({ error: "Not found" }, { status: 404 });
+    throw e;
+  }
 }

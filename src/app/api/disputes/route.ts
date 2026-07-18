@@ -11,8 +11,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const { bookingId, customerId, reason, description } = await request.json();
-  const dispute = await prisma.dispute.create({
-    data: { bookingId, customerId, reason, description },
-  });
-  return NextResponse.json(dispute, { status: 201 });
+  try {
+    const dispute = await prisma.dispute.create({
+      data: { bookingId, customerId, reason, description },
+    });
+    return NextResponse.json(dispute, { status: 201 });
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === "P2002") return NextResponse.json({ error: "Dispute already exists" }, { status: 409 });
+    throw e;
+  }
 }

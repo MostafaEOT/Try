@@ -14,6 +14,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const { providerId, amount, bankAccount } = await request.json();
+  if (!providerId || !amount || amount <= 0 || !bankAccount?.trim()) {
+    return NextResponse.json({ error: "Invalid payout request" }, { status: 400 });
+  }
   await prisma.provider.update({ where: { id: providerId }, data: { bankAccount } });
   const payout = await prisma.payoutRequest.create({
     data: { providerId, amount, bankAccount, status: "pending" },

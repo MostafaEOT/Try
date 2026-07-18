@@ -41,11 +41,22 @@ export async function PATCH(
   if (status) data.status = status;
   if (jobPhotos) data.jobPhotos = jobPhotos;
 
-  const booking = await prisma.booking.update({
-    where: { id },
-    data,
-    include: { customer: { select: { id: true } } },
-  });
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
+
+  let booking;
+  try {
+    booking = await prisma.booking.update({
+      where: { id },
+      data,
+      include: { customer: { select: { id: true } } },
+    });
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === "P2025") return NextResponse.json({ error: "Not found" }, { status: 404 });
+    throw e;
+  }
 
   if (status && notificationMessages[status]) {
     await prisma.notification.create({

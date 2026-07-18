@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const { providerId, customerId, author, avatar, rating, comment, service, bookingId } = await request.json();
 
   const review = await prisma.review.create({
-    data: { providerId, customerId, author, avatar, rating, comment, service, date: "Just now" },
+    data: { providerId, customerId, author, avatar, rating, comment, service, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) },
   });
 
   if (bookingId) {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   const allReviews = await prisma.review.findMany({ where: { providerId } });
-  const avg = allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length;
+  const avg = allReviews.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / allReviews.length;
   await prisma.provider.update({
     where: { id: providerId },
     data: { rating: Math.round(avg * 10) / 10, reviewCount: allReviews.length },
